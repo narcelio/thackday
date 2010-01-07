@@ -28,7 +28,7 @@ from cnpj import Cnpj
 from cpf import Cpf
 
 
-scrap = None
+scraper = None
 
 def pessoa_or_valueerror(cnpj_ou_cpf):
     pessoa = Cnpj(cnpj_ou_cpf)
@@ -50,7 +50,7 @@ def doador_2004(cnpj_ou_cpf):
     >>> tabela is not None
     True
     >>> len(tabela)
-    1
+    16
     >>> len(tabela[0]) == len(doador_2004.campos)
     True
 
@@ -58,38 +58,26 @@ def doador_2004(cnpj_ou_cpf):
     '''
 
     pessoa = pessoa_or_valueerror(cnpj_ou_cpf)
-    scrap = Scraper()
-
-    url = 'http://www.tse.gov.br/sadEleicao2004Prestacao/spce/procDoadorFornecedorListar.jsp?' \
-        'tipo=divDoador&tipoPesquisa=0&arg=' + pessoa.plain()
-
-    try:
-        scrap.open(url)
-    except:
-        return None
-
-    try:
-        a_nome = scrap.html.findAll('a', attrs={'href': regexp('javascript:')})[1]
-    except:
-        return None
-
-    nome = ''.join(a_nome.contents)
+    scraper = Scraper()
 
     url = 'http://www.tse.gov.br/sadEleicao2004Prestacao/spce/index.jsp'
-    scrap.open(url)
+    scraper.open(url)
 
-    scrap.browser.select_form(name='formDoador')
-    scrap.browser.form.find_control(name='nome').readonly = False
-    scrap.browser.form.find_control(name='numero').readonly = False
-    scrap.browser.form['numero'] = pessoa.plain()
-    scrap.browser.form['nome'] = nome.encode('utf8')
+    scraper.browser.select_form(name='formDoador')
+    scraper.browser.form.find_control(name='nome').readonly = False
+    scraper.browser.form.find_control(name='numero').readonly = False
+    scraper.browser.form['numero'] = pessoa.plain()
+    scraper.browser.form['nome'] = '%'
 
-    scrap.submit()
-
-    if not scrap.html.find(text=regexp('Valor Total de Fornecimento')):
+    try:
+        scraper.submit()
+    except:
         return None
 
-    table = scrap.html.findAll('table')[-1]
+    if not scraper.html.find(text=regexp('Valor Total de Fornecimento')):
+        return None
+
+    table = scraper.html.findAll('table')[-1]
 
     lines = []
     for tr in table.findAll('tr')[1:-1]:
@@ -126,15 +114,15 @@ def doador_2006(cnpj_ou_cpf):
     '''
 
     pessoa = pessoa_or_valueerror(cnpj_ou_cpf)
-    scrap = Scraper()
+    scraper = Scraper()
 
     url = 'http://www.tse.gov.br/sadSPCE06F3/faces/careceitaByDoador.jsp'
-    scrap.open(url)
+    scraper.open(url)
 
-    scrap.browser.form['frmByDoador:cdCpfCgc'] = pessoa.plain()
-    scrap.submit(name='frmByDoador:_id4')
+    scraper.browser.form['frmByDoador:cdCpfCgc'] = pessoa.plain()
+    scraper.submit(name='frmByDoador:_id4')
 
-    strong = scrap.html.find('strong', text=regexp('.*prestadas pelo doador.*'))
+    strong = scraper.html.find('strong', text=regexp('.*prestadas pelo doador.*'))
 
     if strong is None:
         return None
@@ -171,32 +159,32 @@ def doador_2008(cnpj_ou_cpf):
     '''
 
     pessoa = pessoa_or_valueerror(cnpj_ou_cpf)
-    scrap = Scraper()
+    scraper = Scraper()
 
     # primeiro verifica se a pessoa foi doadora
     url = 'http://www.tse.jus.br/spce2008ConsultaFinanciamento/lovPesquisaDoador.jsp'
-    scrap.open(url)
+    scraper.open(url)
 
-    scrap.browser.form['cdCpfCnpjDoador'] = pessoa.plain()
-    scrap.browser.form.find_control(name='acao').readonly = False
-    scrap.browser.form['acao'] = 'pesquisar'
-    scrap.submit()
+    scraper.browser.form['cdCpfCnpjDoador'] = pessoa.plain()
+    scraper.browser.form.find_control(name='acao').readonly = False
+    scraper.browser.form['acao'] = 'pesquisar'
+    scraper.submit()
 
-    if scrap.html.find('font', text=regexp('A pesquisa n.o retornou resultado.')):
+    if scraper.html.find('font', text=regexp('A pesquisa n.o retornou resultado.')):
         return None
 
     # e pega a lista de quem recebeu
     url = 'http://www.tse.jus.br/spce2008ConsultaFinanciamento/inicioServlet.do?acao=candidato'
-    scrap.open(url)
-    scrap.browser.form.find_control(name='cdCpfCnpjDoador').readonly = False
-    scrap.browser.form['cdCpfCnpjDoador'] = pessoa.plain()
-    scrap.browser.form.find_control(name='acao').readonly = False
-    scrap.browser.form['acao'] = 'resumo'
-    scrap.submit()
+    scraper.open(url)
+    scraper.browser.form.find_control(name='cdCpfCnpjDoador').readonly = False
+    scraper.browser.form['cdCpfCnpjDoador'] = pessoa.plain()
+    scraper.browser.form.find_control(name='acao').readonly = False
+    scraper.browser.form['acao'] = 'resumo'
+    scraper.submit()
 
     url = 'http://www.tse.jus.br/spce2008ConsultaFinanciamento/listaReceitaCand.jsp'
-    scrap.open(url)
-    td = scrap.html.find('td', attrs={'class':'Left'})
+    scraper.open(url)
+    td = scraper.html.find('td', attrs={'class':'Left'})
 
     fields = []
     while True:
