@@ -23,19 +23,17 @@
 
 import sys
 
-from cnpj import Cnpj
-from cpf import Cpf
+from tse.prestacao_de_contas import pessoa_or_valueerror
 
 if __name__ == '__main__':
     for line in sys.stdin.readlines():
         for part in line.split():
-            cnpj_ou_cpf = Cnpj(line.strip())
-            if not cnpj_ou_cpf.valido():
-                cnpj_ou_cpf = Cpf(line.strip())
-                if not cnpj_ou_cpf.valido():
-                    continue
+            try:
+                pessoa = pessoa_or_valueerror(part.strip())
+            except:
+                continue
 
-            print cnpj_ou_cpf
+            print pessoa
 
 
 # vim:tabstop=4:expandtab:smartindent:encoding=utf8
