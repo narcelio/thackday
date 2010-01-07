@@ -34,7 +34,9 @@ def pessoa_or_valueerror(cnpj_ou_cpf):
     pessoa = Cnpj(cnpj_ou_cpf)
     if not pessoa.valido():
         pessoa = Cpf(cnpj_ou_cpf)
-        if not pessoa.valido():
+        def unico_algarismo_repetido(s):
+            return s == (s[0] * len(s))
+        if not pessoa.valido() or unico_algarismo_repetido(pessoa.plain()):
             raise ValueError('CNPJ/CPF inválido')
     return pessoa
 
